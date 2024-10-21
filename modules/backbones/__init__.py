@@ -1,5 +1,6 @@
 from modules.backbones.wavenet import WaveNet
-
+from modules.backbones.ApcaNet import ApcaNet
 BACKBONES = {
-    'wavenet': WaveNet
+	'wavenet': WaveNet, 
+	'apcanet': ApcaNet
 }
