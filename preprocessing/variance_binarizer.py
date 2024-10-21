@@ -118,14 +118,14 @@ class VarianceBinarizer(BaseBinarizer):
                 item_name = utterance_label['name']
                 item_idx = int(item_name.rsplit(DS_INDEX_SEP, maxsplit=1)[-1]) if DS_INDEX_SEP in item_name else 0
 
-                def require(attr):
+                def require(attr, optional=False):
                     if self.prefer_ds:
                         value = self.load_attr_from_ds(ds_id, item_name, attr, item_idx)
                     else:
                         value = None
                     if value is None:
                         value = utterance_label.get(attr)
-                    if value is None:
+                    if value is None and not optional:
                         raise ValueError(f'Missing required attribute {attr} of item \'{item_name}\'.')
                     return value
 
@@ -169,7 +169,16 @@ class VarianceBinarizer(BaseBinarizer):
                     assert any([note != 'rest' for note in temp_dict['note_seq']]), \
                         f'All notes are rest in \'{item_name}\'.'
                     if hparams['use_glide_embed']:
-                        temp_dict['note_glide'] = require('note_glide').split()
+                        note_glide = require('note_glide', optional=True)
+                        if note_glide is None:
+                            note_glide = ['none' for _ in temp_dict['note_seq']]
+                        else:
+                            note_glide = note_glide.split()
+                            assert len(note_glide) == len(temp_dict['note_seq']), \
+                                f'Lengths of note_seq and note_glide mismatch in \'{item_name}\'.'
+                            assert all(g in self.glide_map for g in note_glide), \
+                                f'Invalid glide type found in \'{item_name}\'.'
+                        temp_dict['note_glide'] = note_glide
 
                 meta_data_dict[f'{ds_id}:{item_name}'] = temp_dict
 
